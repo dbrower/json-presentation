@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>Intro to JSON</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -23,27 +23,24 @@ class: center, middle
 
 # JSON 101
 
-Donald Brower
+Don Brower
 
 dbrower@nd.edu
 
-2018 Hackathon
+2019 Hackathon
 
 ---
 
 # JSON (and not Jason)
 
-1. **J**ava**S**cript
-2. **O**bject
-3. **N**otation
+JSON is a text-based format for data interchange between programs.
 
-It is a text-based format for data interchange between programs.
+* Between Server and Web browser
+* From Server to Server
+* From Today to Tomorrow (i.e. storage)
 
-e.g. Between Server and Web browser
+The name is a contraction of the phrase **J**ava**S**cript **O**bject **N**otation
 
-e.g. From Server to Server
-
-e.g. From Today to Tomorrow (i.e. storage)
 
 
 ---
@@ -66,16 +63,188 @@ null
 
 There are 7 types of _values_ in a JSON document.
 
-* an _object_
-* an _array_
-* a _number_
-* a _string_
+* `null`
 * `false`
 * `true`
-* `null`
+* a _number_ :   `45.67`
+* a _string_ :   `"hello there \u2655"`
+* an _array_ :   `[1, 2, 3, "four"]`
+* an _object_ :  `{ "results": [0, 42] }`
 
 
-Oh yeah, all interchanged JSON documents are also valid utf-8 documents.
+Most interchanged JSON documents use utf-8.
+
+---
+
+# Working with JSON
+
+JSON is a way to transfer information.
+
+* Converting your program data into JSON is called **encoding** or **serializing**.
+* Converting JSON into an in-memory data structure is called **decoding** or **deserializing**.
+
+It provides a common way to exchange data between programs in different languages.
+
+.center[![Encode/Decode Diagram](encode-decode.jpg)]
+
+---
+
+# Python Example
+
+Decode a JSON text:
+
+```python
+import json
+
+json_data = """
+    ["foo", "bar", 5, 42]
+"""
+
+v = json.loads(json_data)
+```
+
+Now `v` holds `['foo', 'bar', 5, 42]`
+
+---
+
+# Python Example (Cont)
+
+Encode a JSON variable:
+
+```python
+import json
+
+v = ['foo', 'bar', 5, 42]
+
+json_data = json.dumps(v)
+```
+
+Now `json_data` holds the string `'["foo","bar",5,42]'`
+
+
+---
+
+# Javascript Example
+
+Decode JSON:
+
+```javascript
+json_data  = "[34,45,56]"
+v = JSON.parse(json_data)
+```
+
+Now `v` is a list with `v[0] = 34`, `v[1] = 45`, and `v[2] = 56`
+
+Encode JSON:
+
+```javascript
+v = {"age": 78}
+json_data = JSON.stringify(v)
+```
+`json_data` now holds the string `"{\"age\":78}"`
+
+---
+
+# Situations — Dates
+
+JSON does not include a date type. The usual way around this is to format dates
+as a string in RFC 3339 or ISO-8601 format.
+
+```
+"2018-03-24T12:00:00-04"
+```
+
+
+
+Some APIs might use the number of seconds since midnight January 1, 1970 (aka the unix epoch).
+
+```
+1521921600
+```
+
+What time is this? You can find out using the command line:
+
+```
+$ date -j -f "%s" 1521921600
+Sat Mar 24 16:00:00 EDT 2018
+```
+
+(This assumes the current timezone since epoch times do not include timezone information.)
+
+---
+
+# Situations — Binary Data
+
+Since JSON is text based and is encoded as utf-8 one cannot include binary
+data directly, since binary data will invariably contain forbidden utf-8 byte sequences.
+
+Work around this by converting the binary data into strings.
+The most common way is as Base64, which translates the binary data into text that only
+contains the characters `A-Z`, `a-z`, `0-9`, `+`, `/`, and `=`. (This is 65 characters. why?).
+
+```
+"data": "aGVsbG8gd29ybGQ="
+```
+
+Most languages have packages to do base64 conversions. You can also do them on the command line
+using the `base64` program (on Macs and Linux).
+
+```
+$ echo -n "hello world" | base64
+aGVsbG8gd29ybGQ=
+
+$ echo -n "aGVsbG8gd29ybGQ=" | base64 --decode
+hello world
+```
+
+---
+
+# jq
+
+There is a command line tool `jq` that is helpful for dealing with JSON data.
+
+It can pretty-print a JSON file:
+
+```
+jq . input-file
+```
+
+You can also select certain data, and even build new JSON and non-JSON documents.
+
+```
+echo "[1,2,3]" | jq 'map(.+1)' #==> [2,3,4]
+```
+
+This tool is be very useful.
+```
+https://stedolan.github.io/jq/
+https://jqplay.org/
+
+
+(test data: https://jsonplaceholder.typicode.com/ )
+```
+
+---
+
+# Standards
+
+JSON is defined as a standard RFC-8259 and ECMA-404.
+
+```
+https://tools.ietf.org/html/rfc8259
+
+http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
+```
+
+# Further Info
+
+```
+https://www.json.org/
+
+https://en.wikipedia.org/wiki/JSON
+
+```
+
 
 ---
 
@@ -89,11 +258,8 @@ true
 null
 ```
 
-They are encoded just like that. They are all lowercase.
+All lowercase.
 
-What each means depends on the library you use to decode/encode JSON.
-If the language has boolean values, `true` and `false` are usually mapped to those.
-`null` usually to a null or nil pointer, if the language has them.
 
 ---
 
@@ -105,6 +271,8 @@ A string starts with a double quote, and ends with a double quote.
 "a string"
 ""              <------ empty string
 ```
+
+## Details
 
 Any unicode character can occur in between the double quotes except for:
 a double quote, a backslash, a control character.
@@ -118,14 +286,11 @@ These special characters can be included by escaping them with a backslash
 "backslashes, \\, need to be escaped"
 ```
 
-Can also encode unicode as an escape (e.g. if passing the JSON through a system that cannot handle utf-8).
-Escape unicode as `\uXXXX`.
+Can encode unicode using an escape if passing the JSON through a system that does not handle utf-8.
 
 ```
 "\u214b \u2655 \u20bf" == "⅋ ♕ ₿"
 ```
-
-For high code points, escape as though encoded as UTF-16. (whatever that means)
 
 
 ---
@@ -148,21 +313,14 @@ JSON does not distinguish between different representations of the same number s
 `12 == 12.0 == 1.2e1 == 0.12e2`
 are all the same value.
 
-JSON does not distinguish between integers and floating point.
-The standard also does not provide for a maximum, minimum, or floating point mantissa size.
-(So...beware! For interoperability keep integers between -(2^53)+1 and (2^53)-1. Note that
-this is smaller than the range of a 64 bit integer.
-If need to send numbers bigger than 2^53, then send them as a base10 or base16 formatted string.)
-
-Leading zeros are not allowed, with the excepetion of fractions. Then a zero is required before the decinal point
-if there is no integer part.
 
 ---
 
 # Objects
 
-A JSON object is a collection of key-value pairs. It is introduced with curly braces.
-Each key is a string, followed by a colon and then a value.
+A JSON object is a collection of key-value pairs inside curly braces.
+
+**Each key is a string,** followed by a colon and then a value.
 Pairs are separated with commas. (But no trailing commas!)
 The value can be any valid JSON expression.
 
@@ -174,22 +332,8 @@ The value can be any valid JSON expression.
     },
     "another key": 42
 }
-```
 
-The whitespace and newlines are not necessary. The standard permits, and does not
-specify the meaning of, a key is being provided more than once. The following is valid:
-
-```
-{
-    "Something": 5,
-    "Something": false
-}
-```
-
-A object with no pairs is the empty object:
-
-```
-{}
+{}     <---- empty object
 ```
 
 
@@ -198,11 +342,12 @@ A object with no pairs is the empty object:
 # Arrays
 
 An array is an ordered sequence of values.
-It is notated as an open square brace, a sequence of JSON values separated with commas, and then
-a closing square brace.
+It is uses square braces, and separates values with commas.
 
 ```
 [1, 2, 3]
+
+[]    <----- empty array
 ```
 
 The items in an array do not need to be of the same type:
@@ -210,258 +355,6 @@ The items in an array do not need to be of the same type:
 ```
 [1, true, null, "foo", {"name":"foo"}, []]
 ```
-
-
-
----
-
-# Quiz
-
-Which of the following is valid JSON?
-
-
-1. `NULL`
-2. 012345
-3. `"False"`
-4. `{}`
-5. `.567`
-6. `10000000000000000000000000000000000000000000000000`
-7. `45e12345678902345`
-8. `-0.0`
-9. `NaN`
-10. `[2, 3, 4, ]`
-11. `{"a": 46, "a": 34. }`
-12. `{45: 2}`
-13. `{null: null}`
-
-
----
-
-# Quiz - Answers
-
-Which of the following is valid JSON?
-
-
-1. `NULL` - No. Wrong capatilization.
-2. 012345 - No. Has leading zero.
-3. `"False"` - Yes. This is a string. (compare with `false`).
-4. `{}` - Yes.
-5. `.567` - No. Needs zero before decimal.
-6. `10000000000000000000000000000000000000000000000000` - Yes.
-7. `45e12345678902345` - Yes.
-8. `-0.0` - Yes.
-9. `NaN` - No.
-10. `[2, 3, 4, ]` - No. Has trailing comma
-11. `{"a": 46, "a": 34. }` - No. The decimal point is not followed by a numeral. (this is unfair, I didn't cover this in the previous slides!)
-12. `{45: 2}` - No. Keys must be strings.
-13. `{null: null}` - No. Keys must be strings.
-
----
-
-# Situations - Dates
-
-JSON does not include a date type. Usual way around this is to format dates
-as a string in RFC 3339 or ISO-8601 format.
-
-```
-"2018-03-24T12:00:00-04"
-```
-
-Since the internet spans the world, it is important to include the timezone information in your times.
-(Here it is the `-04` for EDT.)
-
-Some APIs might use the number of seconds since midnight January 1, 1970 (aka the unix epoch).
-
-```
-1521921600
-```
-
-These are problematic since they do not include timezone information.
-
-```
-$ date -j -f "%s" 1521921600
-Sat Mar 24 16:00:00 EDT 2018
-```
-
----
-
-# Situations - Binary Data
-
-Since JSON is text based and is encoded as utf-8 one cannot include binary
-data directly, since binary data will invariably contain forbidden utf-8 byte sequences.
-
-One can work around this by encoding the binary data first. The most common way is
-as Base64, which translates each 3 bytes of binary data into 4 characters from a 64
-character alphabet (usually `A-Z`, `a-z`, `0-9`, `+`, `/`, and `=`. and this is 65 characters!).
-
-```
-"data": "aGVsbG8gd29ybGQ="
-```
-
-Most languages have packages to do base64 conversions. You can also do them on the command line
-using the `base64` program (on Macs and Linux).
-
-```
-echo -n "aGVsbG8gd29ybGQ=" | base64 --decode > output-file
-```
-
----
-
-# Situations - Numbers as Identifiers
-
-Sometimes numbers are used to identify items, as not as a numeric measurement.
-For example, we may want database record 478920. Or, in the library, each item in the
-catalog has a record number such as 004648923.
-
-In the first case, we may also represent that number as `47892e1` in JSON.
-In the second case, numbers cannot have leading zeros in JSON. That could cause
-problems if the receiving system is expecting the leading zeros.
-
-In these cases, it is better to send the number as a _string_. e.g.
-
-```
-"478920"
-"004648923"
-```
-
-Other identifiers may already contain dots or hyphens, and those of course need to be sent as strings.
-
-```
-"123e4567-e89b-12d3-a456-426655440000"
-"v2.56"
-```
-
-(note: version numbers are especially tricky, since after v2.99 is v2.100. These as versions have a different
-comparison relation than these as floating point numbers.)
-
----
-
-# Situations - No Comments
-
-You may have noticed that there is no way to comment out text in a JSON document.
-This is not necessarily a drawback when using JSON for data interchange, but it can
-be if programs use JSON for configuration.
-
-One inelegant way around it is to make the comment a value to a key in an object.
-
-```
-{
-    "_comment": "this is the first run testing data",
-    "a": 1,
-    ...
-}
-```
-
----
-
-# JSON in the Wild
-
-JSON tends to be found wherever data is exchanged over a network, or stored.
-
-* As Responses to Web-based APIs
-* Information stored in NoSQL databases (e.g. )
-* In configuration files
-
-
-# Extensions
-
-There are many extensions of JSON for various applications.
-(Paradoxically, the extensions actually define subsets of valid JSON documents.)
-
-* JSON-LD - JSON representation of RDF Linked Data
-* GeoJSON - JSON for representing shapes and maps
-
----
-
-# JSON Trade-offs
-
-Like any other technology, there are trade-offs with JSON
-
-* It is text-based, so it is easy to inspect the data sent between programs.
-* It has a well-defined encoding that has library support in a *lot* of programming languages
-* The base64 encoding for binary content requires time to encode/decode and expands the size by 33%.
-* However, many of web servers will send compressed JSON, so the size factor is mitigated.
-* The stored data does not require any external knowledge to decoded it. (e.g. Decoder does not need to know that the first field is the author, the second is the date created, etc...)
-* On other hand, if storing a lot of data, there can be a lot of redundancy since each object key will be repeated for each object. This can add up to a lot of storage.
-* JSON cannot represent data with cycles or self references
-* All newlines in JSON strings need to be escaped `\n`, which makes writing text in JSON difficult.
-
----
-
-# Other kinds of Markup
-
-There are other kinds of Markup that is similar to JSON.
-
-* XML
-* YAML
-* BSON (Binary JSON)
-* MessagePack (also binary)
-* Protocol Buffers
-
-These are only ones I have seen. There are many others.
-They were created to serve different purposes, so they make different engineering trade-offs.
-
----
-
-# jq
-
-There is a command line tool `jq` that is helpful for dealing with JSON data.
-
-The basic usage will pretty-print a JSON file:
-
-```
-jq . input-file
-```
-
-You can also select certain data, and even build new JSON and non-JSON documents.
-
-```
-echo "[1,2,3]" | jq 'map(.+1)' #==> [2,3,4]
-```
-
-This tool can be very useful.
-```
-https://stedolan.github.io/jq/
-https://jqplay.org/
-```
-
----
-
-# Trivia
-
-While JSON is inspired by Javascript, there are valid JSON documents that are not valid Javascript documents.
-
-Can you find one?
-
-
----
-
-# Standards
-
-JSON is defined as a standard RFC-8259. And also, concurrently, as ECMA-404.
-
-```
-https://tools.ietf.org/html/rfc8259
-
-http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
-```
-
-# Further Info
-
-```
-https://www.json.org/
-
-https://en.wikipedia.org/wiki/JSON
-```
-
----
-
-# Trivia - Answer
-
-While JSON is inspired by Javascript, there are valid JSON documents that are not valid Javascript documents.
-
-JSON allows U+2028 LINE SEPARATOR characters to be included directly in strings; Javascript requires them to be escaped.
-
 
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
